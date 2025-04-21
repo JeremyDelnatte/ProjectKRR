@@ -1,0 +1,67 @@
+width(3).
+height(3).
+depth(2).
+blocks(1..5).
+
+cell(1..W, 1..H, 1..D) :- width(W), height(H), depth(D).
+
+{ block_size(B, Size) : Size = 1..H*W*D, width(W), height(H), depth(D) } = 1 :- blocks(B).
+:- #sum { Size, B : block_size(B, Size) } != H*W*D, width(W), height(H), depth(D).
+
+{ cell_value(X, Y, Z, B, N) : N=1..Size, block_size(B, Size) } = 1 :- cell(X, Y, Z).
+:- block_size(B, Size), N=1..Size, not cell_value(_, _, _, B, N).
+
+dir(a,  0,  1,  0).
+dir(b,  0, -1,  0).
+dir(n,  0,  0,  1).
+dir(s,  0,  0, -1).
+dir(e,  1,  0,  0).
+dir(w, -1,  0,  0).
+
+adjacent(X, Y, Z, X + DX, Y + DY, Z + DZ, Dir) :- cell(X, Y, Z), dir(Dir, DX, DY, DZ).
+adjacent(B, N1, N2, Dir) :- cell_value(X1, Y1, Z1, B, N1), cell_value(X2, Y2, Z2, B, N2), adjacent(X1, Y1, Z1, X2, Y2, Z2, Dir).
+
+connected(B, 1) :- blocks(B).
+connected(B, N2) :- connected(B, N1), adjacent(B, N1, N2, _).
+
+:- block_size(B, Size), N=1..Size, not connected(B, N).
+
+rot((0; 90; 180; 270)).
+
+rot_dir(Dir, R, x, Dir) :- Dir = (e; w), rot(R).
+rot_dir(Dir, R, y, Dir) :- Dir = (a; b), rot(R).
+rot_dir(Dir, R, z, Dir) :- Dir = (n; s), rot(R).
+
+rot_dir(a, 90, x, s).
+rot_dir(s, 90, x, b).
+rot_dir(b, 90, x, n).
+rot_dir(n, 90, x, a).
+
+rot_dir(n, 90, y, e).
+rot_dir(e, 90, y, s).
+rot_dir(s, 90, y, w).
+rot_dir(w, 90, y, n).
+
+rot_dir(a, 90, z, e).
+rot_dir(e, 90, z, b).
+rot_dir(b, 90, z, w).
+rot_dir(w, 90, z, a).
+
+rot_dir(Dir1, 180, Axis, Dir3) :- rot_dir(Dir1, 90, Axis, Dir2), rot_dir(Dir2, 90, Axis, Dir3).
+rot_dir(Dir1, 270, Axis, Dir2) :- rot_dir(Dir2, 90, Axis, Dir1).
+rot_dir(Dir, 0, Axis, Dir) :- Dir=(a; b; n; e; s; w), Axis = (x; y; z).
+
+{ rot(Axis, B, R) : rot(R) } = 1 :- blocks(B), Axis = (x; y; z).
+
+rot_x(B, N1, N2, Dir') :- rot(x, B, R), rot_dir(Dir, R, x, Dir'), adjacent(B, N1, N2, Dir).
+rot_y(B, N1, N2, Dir') :- rot(y, B, R), rot_dir(Dir, R, y, Dir'), rot_x(B, N1, N2, Dir).
+rot_z(B, N1, N2, Dir') :- rot(z, B, R), rot_dir(Dir, R, z, Dir'), rot_y(B, N1, N2, Dir).
+
+0 { block(B, N1, N2, Dir) } 1 :- rot_z(B, N1, N2, Dir).
+:- block(B, N1, N2, _), block(B, N2, N1, _).
+:- block(B, N1, N2, _), block(B, N3, N2, _), N1 != N3.
+:- not block(B, 1, _, _), blocks(B), block_size(B, Size), Size > 1.
+:- block_size(B, Size), N=2..Size, not block(B, _, N, _).
+
+% #show adjacent/4.
+% #show block_size/2.
