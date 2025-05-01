@@ -30,7 +30,7 @@ def solve_step(program, step, rand_freq=1.0, parallel=11, last=False, parameters
 def run_generator(height, width, depth, print=False):
     global facts
     facts = []
-    program = "generator2-programs.lp"
+    program = "generator-programs.lp"
     global seed
     seed = secrets.randbelow(2**31)
 
