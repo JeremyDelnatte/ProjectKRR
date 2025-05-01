@@ -1,12 +1,22 @@
-width(4).
-height(4).
-depth(4).
+width(3).
+height(3).
+depth(3).
 blocks(1..10).
+block_size(2,1).
+block_size(3,1).
+block_size(4,1).
+block_size(5,1).
+block_size(6,1).
+block_size(8,2).
+block_size(9,2).
+block_size(10,2).
+block_size(7,3).
+block_size(1,13).
 
 cell(1..W, 1..H, 1..D) :- width(W), height(H), depth(D).
 
-{ block_size(B, Size) : Size = 1..H*W*D, width(W), height(H), depth(D) } = 1 :- blocks(B).
-:- #sum { Size, B : block_size(B, Size) } != H*W*D, width(W), height(H), depth(D).
+% { block_size(B, Size) : Size = 1..H*W*D, width(W), height(H), depth(D) } = 1 :- blocks(B).
+% :- #sum { Size, B : block_size(B, Size) } != H*W*D, width(W), height(H), depth(D).
 
 { cell_value(X, Y, Z, B, N) : N=1..Size, block_size(B, Size) } = 1 :- cell(X, Y, Z).
 :- block_size(B, Size), N=1..Size, not cell_value(_, _, _, B, N).
@@ -64,4 +74,4 @@ rot_z(B, N1, N2, Dir') :- rot(z, B, R), rot_dir(Dir, R, z, Dir'), rot_y(B, N1, N
 :- block_size(B, Size), N=2..Size, not block(B, _, N, _).
 
 #show block/4.
-#show block_size/2.
+% #show block_size/2.

@@ -1,28 +1,40 @@
+blocks(1).
+blocks(2).
+blocks(3).
+blocks(4).
+blocks(5).
+blocks(6).
+blocks(7).
+blocks(8).
+blocks(9).
+blocks(10).
 width(3).
 height(3).
-depth(2).
-blocks(1..5).
+depth(3).
+block_size(2,1).
+block_size(3,1).
+block_size(4,1).
+block_size(5,1).
+block_size(6,1).
+block_size(8,2).
+block_size(9,2).
+block_size(10,2).
+block_size(7,3).
+block_size(1,13).
 
 cell(1..W, 1..H, 1..D) :- width(W), height(H), depth(D).
 
-{ block_size(B, Size) : Size = 1..H*W*D, width(W), height(H), depth(D) } = 1 :- blocks(B).
-:- #sum { Size, B : block_size(B, Size) } != H*W*D, width(W), height(H), depth(D).
-
-% { cell_value(X, Y, Z, B, N) : N=1..Size, block_size(B, Size) } = 1 :- cell(X, Y, Z).
-% :- block_size(B, Size), N=1..Size, not cell_value(_, _, _, B, N).
+adjacent(X, Y, Z, X2, Y2, Z2, Dir) :- cell(X, Y, Z), dir(Dir, DX, DY, DZ), X2 = X + DX, Y2 = Y + DY, Z2 = Z + DZ, cell(X2, Y2, Z2).
 
 { cell_value(X, Y, Z, B, 1) : cell(X, Y, Z) } = 1 :- blocks(B).
+:- cell_value(X, Y, Z, B1, 1), cell_value(X, Y, Z, B2, 1), B1 != B2.
 
-{ cell_value_adjacent(X, Y, Z, B, N2, N1, Dir) : cell_value(X + DX, Y + DY, Z + DZ, B, N1), N2=2..Size, block_size(B, Size), N1 != N2, dir(Dir, DX, DY, DZ) } = 1 :- cell(X, Y, Z).
-
-% adjacent(X, Y, Z, X2, Y2, Z2, Dir) :- cell(X, Y, Z), dir(Dir, DX, DY, DZ), X2 = X + DX, Y2 = Y + DY, Z2 = Z + DZ, cell(X2, Y2, Z2).
-%
-% { cell_value(X, Y, Z, B, 1) : cell(X, Y, Z) } = 1 :- blocks(B).
-%
-% { cell_value_adjacent(X2, Y2, Z2, B, N2, N1, Dir) : cell_value(X, Y, Z, B, N1), N2=2..Size, block_size(B, Size), N1 != N2, adjacent(X, Y, Z, X2, Y2, Z2, Dir) } = 1 :- cell(X, Y, Z).
+{ cell_value_adjacent(X2, Y2, Z2, B, N2, N1, Dir) : cell_value(X, Y, Z, B, N1), N2=2..Size, block_size(B, Size), N1 != N2, adjacent(X, Y, Z, X2, Y2, Z2, Dir) } = 1 :- cell(X, Y, Z).
+:- block_size(B, Size), N=1..Size, not cell_value(_, _, _, B, N).
+:- block_size(B, Size), N=1..Size, #count { X, Y, Z : cell_value(X, Y, Z, B, N) } != 1.
 
 cell_value(X, Y, Z, B, N) :- cell_value_adjacent(X, Y, Z, B, N, _, _).
-adjacent(B, N1, N2, Dir) :- cell_value_adjacent(_, _, _, B, N2, N1, Dir).
+% adjacent(B, N1, N2, Dir) :- cell_value_adjacent(_, _, _, B, N2, N1, Dir).
 
 dir(a,  0,  1,  0).
 dir(b,  0, -1,  0).
@@ -30,14 +42,6 @@ dir(n,  0,  0,  1).
 dir(s,  0,  0, -1).
 dir(e,  1,  0,  0).
 dir(w, -1,  0,  0).
-
-% adjacent(X, Y, Z, X + DX, Y + DY, Z + DZ, Dir) :- cell(X, Y, Z), dir(Dir, DX, DY, DZ).
-% adjacent(B, N1, N2, Dir) :- cell_value(X1, Y1, Z1, B, N1), cell_value(X2, Y2, Z2, B, N2), adjacent(X1, Y1, Z1, X2, Y2, Z2, Dir).
-
-% connected(B, 1) :- blocks(B).
-% connected(B, N2) :- connected(B, N1), adjacent(B, N1, N2, _).
-
-% :- block_size(B, Size), N=1..Size, not connected(B, N).
 
 % rot((0; 90; 180; 270)).
 %
@@ -68,16 +72,10 @@ dir(w, -1,  0,  0).
 %
 % rot_x(B, N1, N2, Dir') :- rot(x, B, R), rot_dir(Dir, R, x, Dir'), adjacent(B, N1, N2, Dir).
 % rot_y(B, N1, N2, Dir') :- rot(y, B, R), rot_dir(Dir, R, y, Dir'), rot_x(B, N1, N2, Dir).
-% rot_z(B, N1, N2, Dir') :- rot(z, B, R), rot_dir(Dir, R, z, Dir'), rot_y(B, N1, N2, Dir).
+% block(B, N1, N2, Dir') :- rot(z, B, R), rot_dir(Dir, R, z, Dir'), rot_y(B, N1, N2, Dir).
 
-% #show rot_z/4.
+% #show block/4.
+% #show adjacent/4.
 #show cell_value/5.
-
-% 0 { block(B, N1, N2, Dir) } 1 :- rot_z(B, N1, N2, Dir).
-% :- block(B, N1, N2, _), block(B, N2, N1, _).
-% :- block(B, N1, N2, _), block(B, N3, N2, _), N1 != N3.
-% :- not block(B, 1, _, _), blocks(B), block_size(B, Size), Size > 1.
-% :- block_size(B, Size), N=2..Size, not block(B, _, N, _).
-
 % #show adjacent/4.
 % #show block_size/2.
