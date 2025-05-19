@@ -85,6 +85,14 @@ struct Positions {
     pipe_positions: HashMap<(usize, usize, usize), (Direction, Direction)>,
 }
 
+#[derive(Resource, Debug)]
+struct Config {
+    width: usize,
+    height: usize,
+    depth: usize,
+    hide: bool,
+}
+
 #[derive(Component)]
 struct Block {
     y: usize,
@@ -95,6 +103,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     positions: Res<Positions>,
+    config: Res<Config>,
 ) {
 
     // let mat = materials.add(StandardMaterial {
@@ -120,14 +129,14 @@ fn setup(
         materials_block.insert(block, mat);
     }
 
-    commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(0.4, 0.4, 0.4))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::WHITE,
-            ..default()
-        })),
-        Transform::from_xyz(0.3, 1.3, 0.3),
-    ));
+    // commands.spawn((
+    //     Mesh3d(meshes.add(Cuboid::new(0.4, 0.4, 0.4))),
+    //     MeshMaterial3d(materials.add(StandardMaterial {
+    //         base_color: Color::WHITE,
+    //         ..default()
+    //     })),
+    //     Transform::from_xyz(0.3, 1.3, 0.3),
+    // ));
 
     let pipe_color = Color::srgb_u8(255, 0, 0);
     let pipe_mat = materials.add(StandardMaterial {
@@ -135,12 +144,12 @@ fn setup(
         ..default()
     });
 
-    for x in 1..=3 {
-        for z in 1..=3 {
-            for y in 1..=3 {
+    for x in 1..=config.width {
+        for z in 1..=config.depth {
+            for y in 1..=config.height {
                 let block = positions
                     .positions
-                    .get(&(x, z, y))
+                    .get(&(x, y, z))
                     .unwrap();
 
                 let mat = materials_block
@@ -244,29 +253,34 @@ fn toggle_camera_controls_system(
 
 fn switch_layer_system(
     key_input: Res<ButtonInput<KeyCode>>,
+    mut config: ResMut<Config>,
     mut active_layer: ResMut<ActiveLayer>,
     mut query: Query<(&Block, &mut Visibility)>,
 ) {
-    if key_input.just_pressed(KeyCode::ArrowUp) {
-        active_layer.y += 1;
-    } else if key_input.just_pressed(KeyCode::ArrowDown) {
-        if active_layer.y > 0 {
-            active_layer.y -= 1;
-        }
+    // if key_input.just_pressed(KeyCode::ArrowUp) {
+    //     active_layer.y += 1;
+    // } else if key_input.just_pressed(KeyCode::ArrowDown) {
+    //     if active_layer.y > 0 {
+    //         active_layer.y -= 1;
+    //     }
+    // }
+    //
+    if key_input.just_pressed(KeyCode::KeyH) {
+        config.hide = !config.hide;
     }
 
     for (block, mut visibility) in query.iter_mut() {
-        *visibility = if block.y == active_layer.y {
-            Visibility::Visible
+        *visibility = if config.hide {
+            Visibility::Hidden
+
         } else {
             Visibility::Visible
-            // Visibility::Hidden
         };
     }
 }
 
 fn parse_sol(line: &str) -> Positions {
-    let atoms: Vec<&str> = line.split(" ").collect();
+    let atoms: Vec<&str> = line.trim().split(" ").collect();
     let mut positions: HashMap<(usize, usize, usize), String> = HashMap::new();
     let mut pipe_positions: HashMap<(usize, usize, usize), (Direction, Direction)> = HashMap::new();
 
@@ -303,31 +317,54 @@ fn parse_sol(line: &str) -> Positions {
 }
 
 
+use clap::Parser;
+
+/// Compute the volume of a box (defaults to a 3×3×3 cube)
+#[derive(Parser, Debug)]
+#[command(author, version, about)]
+struct Args {
+    /// Box height (default 3)
+    #[arg(long, default_value_t = 3)]
+    height: usize,
+
+    /// Box width  (default 3)
+    #[arg(long, default_value_t = 3)]
+    width: usize,
+
+    /// Box depth  (default 3)
+    #[arg(long, default_value_t = 3)]
+    depth: usize,
+}
+
+
 fn main() {
 
-    // let program = "../programs/generator.lp";
-    //
-    // let output = Command::new("clingo")
-    //     .arg(program)
-    //     .arg("-n 1")
-    //     .arg("--parallel-mode=11")
-    //     .arg("--seed=34837")
-    //     .arg("--rand-freq=1")
-    //     .output()
-    //     .expect("Failed to execute clingo");
-    //
-    // let clingo_output = String::from_utf8_lossy(&output.stdout);
-    // let lines: Vec<&str> = clingo_output.split("\n").collect();
-    //
-    // dbg!(lines[4]);
-    // let positions = parse_sol(lines[4]);
+    let args = Args::parse();
 
-    let positions = parse_sol("block_pos(3,1,2,8,2) block_pos(3,2,2,8,1) block_pos(3,3,1,5,2) block_pos(3,1,1,5,5) block_pos(3,2,1,5,1) block_pos(3,3,3,3,4) block_pos(3,3,2,3,1) block_pos(1,3,2,2,3) block_pos(2,3,2,2,1) block_pos(2,3,1,2,2) block_pos(2,2,3,1,3) block_pos(1,3,3,1,4) block_pos(1,2,3,1,1) block_pos(1,1,3,1,6) block_pos(2,1,3,1,2) block_pos(3,2,3,3,2) block_pos(2,3,3,3,3) block_pos(2,1,1,5,6) block_pos(1,1,1,5,3) block_pos(3,1,3,1,5) block_pos(1,2,1,5,4) block_pos(1,3,1,5,7) pipe_pos(3,3,3,e,b) pipe_pos(1,2,2,e,b) pipe_pos(2,2,1,e,b) block_pos(2,2,2,4,1) block_pos(2,2,1,6,1) block_pos(1,2,2,10,1) block_pos(2,1,2,7,1) pipe_pos(2,3,2,e,n) pipe_pos(2,1,3,e,s) pipe_pos(2,2,1,b,e) pipe_pos(1,2,2,b,e) pipe_pos(3,3,3,b,e) block_pos(1,1,2,9,1) pipe_pos(3,3,2,b,w) pipe_pos(1,2,3,b,w) pipe_pos(3,2,3,b,a) pipe_pos(2,3,3,b,s) pipe_pos(3,3,2,w,b) pipe_pos(1,2,3,w,b) pipe_pos(3,1,3,w,a) pipe_pos(3,2,1,w,n) pipe_pos(2,2,2,w,n) pipe_pos(3,2,3,a,b) pipe_pos(3,1,3,a,w) pipe_pos(2,1,1,a,n) pipe_pos(1,1,2,a,n) pipe_pos(2,2,3,a,s) pipe_pos(3,2,2,a,s) pipe_pos(1,1,3,a,s) pipe_pos(2,1,2,n,s) pipe_pos(1,1,2,n,a) pipe_pos(2,1,1,n,a) pipe_pos(2,3,2,n,e) pipe_pos(2,2,2,n,w) pipe_pos(3,2,1,n,w) pipe_pos(2,1,2,s,n) pipe_pos(2,2,3,s,a) pipe_pos(3,2,2,s,a) pipe_pos(1,1,3,s,a) pipe_pos(2,3,3,s,b) pipe_pos(2,1,3,s,e)");
+    let config = Config {
+        width: args.width,
+        height: args.height,
+        depth: args.depth,
+        hide: false,
+    };
 
-    dbg!(positions.positions.len());
+    let python = "../programs/env/bin/python";
+
+    let output = Command::new(python)
+        .arg("../programs/generator.py")
+        .arg(format!("--height={}", config.height))
+        .arg(format!("--width={}", config.width))
+        .arg(format!("--depth={}", config.depth))
+        .output()
+        .expect("Failed to execute python");
+
+    let positions = parse_sol(String::from_utf8_lossy(&output.stdout).as_ref());
+
+    // let positions = parse_sol("block_pos(2,1,1,1,1) block_pos(1,2,1,4,1) block_pos(1,1,2,7,1) block_pos(3,1,2,6,1) block_pos(3,2,2,3,1) block_pos(2,1,3,8,1) block_pos(3,1,3,2,1) block_pos(3,3,3,5,1) block_pos(1,1,3,8,2) block_pos(2,1,2,8,4) block_pos(1,2,2,7,2) block_pos(3,1,1,6,4) block_pos(2,3,3,5,4) block_pos(1,3,1,4,2) block_pos(3,3,2,3,3) block_pos(3,2,3,2,2) block_pos(1,1,1,1,2) block_pos(3,3,1,3,2) block_pos(2,3,1,4,4) block_pos(1,3,2,4,3) block_pos(2,3,2,5,2) block_pos(1,3,3,5,3) block_pos(3,2,1,6,3) block_pos(1,2,3,7,4) block_pos(2,2,2,8,3) block_pos(2,2,3,7,3) block_pos(2,2,1,6,2) pipe_pos(2,1,1,e,a) pipe_pos(1,2,1,e,a) pipe_pos(1,2,2,e,n) pipe_pos(1,2,3,e,s) pipe_pos(2,2,2,e,w) pipe_pos(2,2,3,e,w) pipe_pos(2,2,1,b,w) pipe_pos(1,3,1,b,w) pipe_pos(3,2,2,b,w) pipe_pos(3,3,3,b,a) pipe_pos(2,2,1,w,b) pipe_pos(1,3,1,w,b) pipe_pos(3,2,2,w,b) pipe_pos(3,2,3,w,a) pipe_pos(3,1,1,w,n) pipe_pos(2,2,2,w,e) pipe_pos(2,2,3,w,e) pipe_pos(2,1,1,a,e) pipe_pos(1,2,1,a,e) pipe_pos(3,2,3,a,w) pipe_pos(3,1,2,a,s) pipe_pos(3,3,3,a,b) pipe_pos(1,2,2,n,e) pipe_pos(3,1,1,n,w) pipe_pos(3,1,2,s,a) pipe_pos(1,2,3,s,e)");
 
     App::new()
         .insert_resource(positions)
+        .insert_resource(config)
         .insert_resource(ActiveLayer { y: 1 }) // <-- starting layer
         .add_plugins(DefaultPlugins)
         .add_plugins(PanOrbitCameraPlugin)

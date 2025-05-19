@@ -6,4 +6,5 @@ edition = "2024"
 [dependencies]
 bevy = "0.15.3"
 bevy_panorbit_camera = "0.25.0"
+clap = { version = "4.5.37", features = ["derive"] }
 rand = "0.9.1"

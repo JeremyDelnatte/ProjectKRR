@@ -18,7 +18,7 @@ dir(e,  1,  0,  0).
 dir(w, -1,  0,  0).
 
 % Gives the opposite direction Dir2 of a direction Dir1.
-(Dir1, 180, _, Dir2), Dir1 != Dir2.
+dir_opposite(Dir1, Dir2) :- rot_dir(Dir1, 180, _, Dir2), Dir1 != Dir2.
 
 % rot_dir(Dir, R, Axis, Dir') defines the rotation of a direction Dir by an angle R on the axis Axis.
 rot_dir(Dir, R, x, Dir) :- Dir = (e; w), rot(R).
@@ -73,7 +73,7 @@ adjacent_cell(X, Y, Z, X2, Y2, Z2, Dir) :- cell(X, Y, Z), dir(Dir, DX, DY, DZ), 
 pipe_pos(X, Y, Z, Out, In) :- pipe_pos(X, Y, Z, In, Out).
 
 % We make sure that the pipe segments form a single continuous path.
-:- pipe_pos(X, Y, Z, _, Out), adjacent_cell(X, Y, Z, X2, Y2, Z2, Out), not pipe_pos(X2, Y2, Z2, In, _), dir_oposite(In, Out), not pipe_in(X, Y, Z, _), not pipe_out(X, Y, Z, _).
+:- pipe_pos(X, Y, Z, _, Out), adjacent_cell(X, Y, Z, X2, Y2, Z2, Out), not pipe_pos(X2, Y2, Z2, In, _), dir_opposite(In, Out), not pipe_in(X, Y, Z, _), not pipe_out(X, Y, Z, _).
 
 % We make sure that the pipe's ends are at the right positions and going the right direction defined by the instances.
 :- pipe_in(X, Y, Z, In), not pipe_pos(X, Y, Z, In, _).

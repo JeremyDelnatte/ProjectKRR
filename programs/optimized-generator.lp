@@ -1,8 +1,9 @@
+#program block_size_gen.
 
 % These are the parametors for the size of the puzzle.
-width(width).
-height(height).
-depth(depth).
+width(w).
+height(h).
+depth(d).
 
 cell_count(C) :- width(W), height(H), depth(D), C=W*H*D.
 
@@ -42,6 +43,8 @@ max_block_size(M) :- M = #max { S, B : block_size(B,S) }, M = 2..C, cell_count(C
 
 % Block shape generation
 % ======================
+
+#program block_gen.
 
 % Blocks are defined as a set of unit cubes that are connected together.
 % Each unit cube of a block will have a unique number {1, ..., block size}.
@@ -94,6 +97,12 @@ adjacent_block(B, N1, N2, Dir) :- cell_block_adjacent(_, _, _, B, N2, N1, Dir).
 
 % Pipe generation
 % ===============
+
+#program pipe_gen.
+
+#defined cell_block/5.
+#defined pipe_unrotated/6.
+#defined pipe_unrotated/4.
 
 % The pipe is defined as a sequence of pipe segments that are connected together.
 % Pipe segments have a direction In and Out for simplicity, but they are not
@@ -167,6 +176,14 @@ rot_dir(Dir1, 180, Axis, Dir3) :-
 
 rot_dir(Dir1, 270, Axis, Dir2) :- rot_dir(Dir2, 90, Axis, Dir1).
 rot_dir(Dir, 0, Axis, Dir) :- Dir=(a; b; n; e; s; w), Axis = (x; y; z).
+
+
+#program rotation.
+
+#defined pipe/4.
+#defined block/4.
+#defined pipe_in/4.
+#defined pipe_out/4.
 
 % For each block, we choose a rotation for each axis.
 { rot(Axis, B, R) : rot(R) } = 1 :- block(B), Axis = (x; y; z).
